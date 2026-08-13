@@ -89,19 +89,19 @@ Session token usage & estimated cost
 价格行解析顺序：`models[model]` → `models[provider]` → `perMTok`（fallback）。
 某行缺 `peak`/`offPeak` 时该模型永远按原价计（如 deepseek-chat / reasoner）。
 
-## Web UI 面板（输入框上方的费用条）
+## Web UI 面板（悬浮费用胶囊）
 
 本包同时是一个 `dsh.client` 双面插件：host 启动时会扫描启用的插件行，把
 `exports["./client"]` 指向的 `client.js`（手写 bundle，无需构建工具链）写入
-客户端启动图，浏览器加载后在 **输入框上方**（`conversation.input.dock`，
-GoalBar 同款位置）渲染一条费用条：
+客户端启动图。浏览器加载后，通过 React Portal 直接挂到 `document.body`，
+渲染一个**悬浮费用胶囊**（默认停靠在左下角设置按钮上方，可拖到页面任意位置）：
 
 ```
-deepseek-official · deepseek-v4-pro   🟢 空闲时段   10,600,000 tok   ¥45.1500   ↻
+deepseek-official · deepseek-v4-pro
+🟢 空闲时段   34.5M tok   ¥2.5111   ↻
 ```
 
 <img src="docs/cost-chip.png" width="420" alt="费用胶囊预览 — 悬浮在会话左下角的费用胶囊">
-
 
 - **↻ 刷新按钮** + 每 5 秒自动刷新 + `tokenUsage` 投影一变化立即刷新；
 - **自由拖拽**：按住胶囊拖到页面任意位置（自动钳制在视口内），位置记忆在浏览器本地，刷新后保持；双击胶囊复位到左下角。
