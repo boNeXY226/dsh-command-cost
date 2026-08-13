@@ -132,40 +132,39 @@ window.__ModuleLoader__.load({
 				: "Session token cost";
 
 			// NOTE: the automatic jsx-runtime signature is jsx(type, props, key) —
-			// children must ride in props.children (variadic children would land
-			// in the `key` slot and render nothing, as the SSR test caught).
+			// children ride in props.children and `key` is the THIRD argument
+			// (variadic children would land in the key slot and render nothing,
+			// and keys inside props trigger a React warning — both caught by the
+			// SSR assertions).
 			const chip = react_jsx_runtime.jsx("div", {
 				style: chipStyle,
 				title,
 				children: [
 					react_jsx_runtime.jsx("div", {
-						key: "model",
 						style: { fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" },
 						children: modelLine,
-					}),
+					}, "model"),
 					react_jsx_runtime.jsx("div", {
-						key: "sub",
 						style: { display: "flex", alignItems: "center", gap: 10, whiteSpace: "nowrap" },
 						children: [
 							...(report
 								? [
-									react_jsx_runtime.jsx("span", { key: "period", style: { flex: "none" }, children: report.periodBadge }),
-									react_jsx_runtime.jsx("span", { key: "tokens", style: { flex: "none", color: "var(--dsw-alias-label-secondary, #a1a1aa)" }, children: fmtCompact(showTokens) + " tok" }),
-									react_jsx_runtime.jsx("span", { key: "money", style: { flex: "none", color: "var(--dsw-alias-state-business-primary, #60a5fa)", fontWeight: 700 }, children: report.currencySymbol + report.cost.total.toFixed(4) }),
+									react_jsx_runtime.jsx("span", { style: { flex: "none" }, children: report.periodBadge }, "period"),
+									react_jsx_runtime.jsx("span", { style: { flex: "none", color: "var(--dsw-alias-label-secondary, #a1a1aa)" }, children: fmtCompact(showTokens) + " tok" }, "tokens"),
+									react_jsx_runtime.jsx("span", { style: { flex: "none", color: "var(--dsw-alias-state-business-primary, #60a5fa)", fontWeight: 700 }, children: report.currencySymbol + report.cost.total.toFixed(4) }, "money"),
 								]
 								: [
-									react_jsx_runtime.jsx("span", { key: "loading", style: { flex: "none", color: "var(--dsw-alias-label-secondary, #a1a1aa)" }, children: "加载中…" }),
+									react_jsx_runtime.jsx("span", { style: { flex: "none", color: "var(--dsw-alias-label-secondary, #a1a1aa)" }, children: "加载中…" }, "loading"),
 								]),
 							react_jsx_runtime.jsx("button", {
-								key: "refresh",
 								style: btnStyle,
 								type: "button",
 								disabled: refreshing,
 								onClick: () => void load(),
 								children: "↻",
-							}),
+							}, "refresh"),
 						],
-					}),
+					}, "sub"),
 				],
 			});
 
