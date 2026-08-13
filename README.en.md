@@ -50,6 +50,9 @@ deepseek-official · deepseek-v4-pro
 - **Draggable**: press and drag the chip anywhere (clamped to the viewport); the
   position is remembered in the browser and survives refreshes; double-click the
   chip to reset it to the bottom-left corner.
+- **Theme-aware**: the chip's colors come from the app's theme CSS variables
+  (`--dsw-alias-*`), so it automatically matches the system/app dark/light theme
+  with no configuration.
 - The chip renders through a React portal to `document.body` with theme-aware
   colors (`--dsw-alias-*` variables), so it follows dark/light switching.
 
