@@ -1,0 +1,47 @@
+{
+  "name": "dsh-command-cost",
+  "version": "0.1.0",
+  "description": "dsh profile plugin: /cost — cumulative token usage and estimated monetary cost for the current session, plus a floating web UI cost chip (peak/off-peak time-of-day pricing)",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "cordis",
+    "plugin",
+    "token",
+    "cost",
+    "pricing"
+  ],
+  "scripts": {
+    "check": "node --check index.js && node --check client.js",
+    "verify": "node scripts/verify.mjs"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web"
+    }
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": true
+    }
+  }
+}
