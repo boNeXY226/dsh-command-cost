@@ -98,6 +98,9 @@ GoalBar 同款位置）渲染一条费用条：
 deepseek-official · deepseek-v4-pro   🟢 空闲时段   10,600,000 tok   ¥45.1500   ↻
 ```
 
+<img src="docs/cost-chip.png" width="420" alt="费用胶囊预览 — 悬浮在会话左下角的费用胶囊">
+
+
 - **↻ 刷新按钮** + 每 5 秒自动刷新 + `tokenUsage` 投影一变化立即刷新；
 - 数据来自 host 的 `/cost-panel/data?session=<id>` JSON 路由（价格与配置只在
   host，单一数据源），悬停面板可看完整价目表；

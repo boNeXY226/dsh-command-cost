@@ -42,6 +42,9 @@ deepseek-official · deepseek-v4-pro
 🟢 空闲时段   34.5M tok   ¥2.5111   ↻
 ```
 
+<img src="docs/cost-chip.png" width="420" alt="Cost chip preview — the floating chip as rendered at the bottom-left of the conversation view">
+
+
 - **Refresh**: manual ↻ button + a 5-second auto-refresh + an immediate refetch
   whenever the `tokenUsage` projection changes.
 - The chip renders through a React portal to `document.body` with theme-aware
