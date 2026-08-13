@@ -1,5 +1,5 @@
 /**
- * dsh-command-cost — a dsh profile plugin registering the `/cost` command.
+ * dsh-cost-chip — a dsh profile plugin registering the `/cost` command.
  *
  * `/cost` prints the current session's cumulative token usage (the
  * provider-reported buckets: uncached input, cache read, cache write, output),
@@ -24,7 +24,7 @@
  * services handed to it at load time, so it resolves even from a profile whose
  * node_modules contains nothing but this package.
  *
- * @module dsh-command-cost
+ * @module dsh-cost-chip
  */
 
 export const name = 'command-cost'

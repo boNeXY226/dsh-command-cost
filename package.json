@@ -1,5 +1,5 @@
 {
-  "name": "dsh-command-cost",
+  "name": "dsh-cost-chip",
   "version": "0.1.0",
   "description": "dsh profile plugin: /cost — cumulative token usage and estimated monetary cost for the current session, plus a floating web UI cost chip (peak/off-peak time-of-day pricing)",
   "type": "module",

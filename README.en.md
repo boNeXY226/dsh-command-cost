@@ -1,4 +1,4 @@
-# dsh-command-cost
+# dsh-cost-chip
 
 A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (dsh) profile
 plugin: the `/cost` slash command plus a floating web UI cost chip showing the
@@ -142,11 +142,11 @@ Rows without `peak`/`offPeak` always bill at original prices.
    ```sh
    # A: official path (pnpm forwarder; keeps package.json/lockfile consistent)
    dsh plugin --profile web add "file:/absolute/path/to/ds-plugins"
-   #    (or `add dsh-command-cost` once published to npm)
+   #    (or `add dsh-cost-chip` once published to npm)
 
    # B: manual copy
    mkdir -p "$DSH_HOME/profiles/web/node_modules"
-   cp index.js client.js package.json "$DSH_HOME/profiles/web/node_modules/dsh-command-cost/"
+   cp index.js client.js package.json "$DSH_HOME/profiles/web/node_modules/dsh-cost-chip/"
    ```
 
    ⚠️ Option A installs a copy of the files at that moment; after editing the
@@ -159,7 +159,7 @@ Rows without `peak`/`offPeak` always bill at original prices.
    ```yaml
    - insert:
        - id: command-cost
-         name: dsh-command-cost
+         name: dsh-cost-chip
    ```
 
 3. Restart the profile (`dsh web` restart required — plugin rows are read at

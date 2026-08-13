@@ -1,5 +1,5 @@
 /**
- * dsh-command-cost client bundle — the web panel half of the plugin.
+ * dsh-cost-chip client bundle — the web panel half of the plugin.
  *
  * A hand-written `dsh.client` bundle (no build step). The host passes the
  * current session id through the `conversation.input.dock` slot inject
@@ -21,7 +21,7 @@
  * the dsh-token-meter already pushes to the client.
  */
 window.__ModuleLoader__.load({
-	id: "dsh-command-cost",
+	id: "dsh-cost-chip",
 	factory: (require) => {
 		var module = { exports: {} };
 		var exports = module.exports;
@@ -82,7 +82,7 @@ window.__ModuleLoader__.load({
 
 		// ── drag & position helpers ────────────────────────────────────────────
 
-		const POS_STORAGE_KEY = "dsh-command-cost:chip-pos";
+		const POS_STORAGE_KEY = "dsh-command-cost:chip-pos"; // 键名保留旧值，升级后位置记忆不丢
 		/** Movement threshold (px) that turns a press into a drag. */
 		const DRAG_THRESHOLD = 4;
 

@@ -1,4 +1,4 @@
-# dsh-command-cost patch row: the plugin entry users insert into a profile.
+# dsh-cost-chip patch row: the plugin entry users insert into a profile.
 #
 # This package is a PLAIN plugin (not a `dsh.bundle` layer), so the row goes
 # into the profile's user patch file — `$DSH_HOME/profiles/<name>/cordis.patch.yml`
@@ -6,7 +6,7 @@
 #
 #   - insert:
 #       - id: command-cost
-#         name: 'dsh-command-cost'
+#         name: 'dsh-cost-chip'
 #         config: {}            # optional; see README for keys
 #
 # The `name` is the npm package itself; the loader resolves it from the
@@ -17,7 +17,7 @@
 
 - insert:
     - id: command-cost
-      name: 'dsh-command-cost'
+      name: 'dsh-cost-chip'
       # config:
       #   timeZone: 'Asia/Shanghai'
       #   peakRanges: [[9, 12], [14, 18]]

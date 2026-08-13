@@ -1,5 +1,5 @@
 /**
- * Offline verification for dsh-command-cost.
+ * Offline verification for dsh-cost-chip.
  *
  * Boots the REAL cordis + loader + dsh-commands from the dsh installation,
  * resolves the plugin the way a dsh profile does (loader baseUrl = profile
@@ -109,10 +109,10 @@ const NORM = {
 
 // ── temp profile dir that mirrors a dsh profile layout ──────────────────────
 const temp = mkdtempSync(join(tmpdir(), 'dsh-cost-test-'))
-mkdirSync(join(temp, 'node_modules', 'dsh-command-cost'), { recursive: true })
-copyFileSync(join(root, 'index.js'), join(temp, 'node_modules', 'dsh-command-cost', 'index.js'))
-writeFileSync(join(temp, 'node_modules', 'dsh-command-cost', 'package.json'), JSON.stringify({
-  name: 'dsh-command-cost',
+mkdirSync(join(temp, 'node_modules', 'dsh-cost-chip'), { recursive: true })
+copyFileSync(join(root, 'index.js'), join(temp, 'node_modules', 'dsh-cost-chip', 'index.js'))
+writeFileSync(join(temp, 'node_modules', 'dsh-cost-chip', 'package.json'), JSON.stringify({
+  name: 'dsh-cost-chip',
   version: '0.0.0-test',
   type: 'module',
   main: 'index.js',
@@ -145,7 +145,7 @@ async function boot(withProjections) {
   await root.plugin(StubMeter)
   if (withProjections) await root.plugin(StubProjections)
   await root.plugin(Loader, { baseUrl: pathToFileURL(temp + '/').href })
-  const entryId = await root.loader.create({ id: 'command-cost', name: 'dsh-command-cost', config: {} })
+  const entryId = await root.loader.create({ id: 'command-cost', name: 'dsh-cost-chip', config: {} })
   await root.loader.await()
   const def = root.commands.find({ options: {} }, 'cost')
   check(`entry resolved and /cost registered (projections=${withProjections})`, !!def)
@@ -232,7 +232,7 @@ const mixedAgent = {
   await root.plugin(StubSessions)
   await root.plugin(WebServer, { host: '127.0.0.1', port: 0 })
   await root.plugin(Loader, { baseUrl: pathToFileURL(temp + '/').href })
-  await root.loader.create({ id: 'command-cost', name: 'dsh-command-cost', config: {} })
+  await root.loader.create({ id: 'command-cost', name: 'dsh-cost-chip', config: {} })
   await root.loader.await()
   const port = root.webServer.port
   check('webserver bound an ephemeral port', Number.isInteger(port) && port > 0, String(port))
@@ -274,7 +274,7 @@ const mixedAgent = {
     },
   }
   await import(pathToFileURL(join(root, 'client.js')).href + `?smoke=${Date.now()}`)
-  check('CL1: bundle registers under its package id', captured?.id === 'dsh-command-cost', JSON.stringify(captured?.id))
+  check('CL1: bundle registers under its package id', captured?.id === 'dsh-cost-chip', JSON.stringify(captured?.id))
 
   // Real React + react-dom/server: exercise the factory and SSR the component
   // so the jsx structure is validated against production React 18.3.1.

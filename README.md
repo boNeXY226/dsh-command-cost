@@ -1,4 +1,4 @@
-# dsh-command-cost
+# dsh-cost-chip
 
 [English](README.en.md)
 
@@ -135,19 +135,19 @@ deepseek-official · deepseek-v4-pro
 
    # 方式 B：手动复制（不改 package.json；再次运行 dsh plugin add 其他包时可能被 pnpm 清理，需重拷）
    mkdir -p "$DSH_HOME/profiles/web/node_modules"
-   cp index.js client.js package.json "$DSH_HOME/profiles/web/node_modules/dsh-command-cost/"
+   cp index.js client.js package.json "$DSH_HOME/profiles/web/node_modules/dsh-cost-chip/"
    ```
 
    ⚠️ 方式 A 安装的是当时文件的副本；之后改动源码需重新同步
    （重跑 `dsh plugin --profile web install` 或直接 `cp index.js client.js` 到
-   `$DSH_HOME/profiles/web/node_modules/dsh-command-cost/`）。
+   `$DSH_HOME/profiles/web/node_modules/dsh-cost-chip/`）。
 
 2. 在 profile 的 `cordis.patch.yml`（`$DSH_HOME/profiles/web/cordis.patch.yml`）中加入：
 
    ```yaml
    - insert:
        - id: command-cost
-         name: dsh-command-cost
+         name: dsh-cost-chip
    ```
 
    （本仓库的 `cordis.patch.yml` 就是这份示例，含全部可配置项的注释。）
