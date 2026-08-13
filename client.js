@@ -37,10 +37,9 @@ window.__ModuleLoader__.load({
 
 		// Theme-aware colors: read the app's own CSS variables so the chip
 		// follows dark/light switching; the fallbacks match the dark theme.
+		// Position (left/top) is state-driven so the chip can be dragged.
 		const chipStyle = {
 			position: "fixed",
-			left: 16,
-			bottom: 51,
 			zIndex: 2147483000,
 			display: "flex",
 			flexDirection: "column",
@@ -56,7 +55,7 @@ window.__ModuleLoader__.load({
 			fontSize: 12,
 			lineHeight: "18px",
 			userSelect: "none",
-			cursor: "default",
+			touchAction: "none",
 		};
 		const btnStyle = {
 			width: 26,
@@ -81,6 +80,53 @@ window.__ModuleLoader__.load({
 			return String(Math.round(n))
 		}
 
+		// ── drag & position helpers ────────────────────────────────────────────
+
+		const POS_STORAGE_KEY = "dsh-command-cost:chip-pos";
+		/** Movement threshold (px) that turns a press into a drag. */
+		const DRAG_THRESHOLD = 4;
+
+		/** Default dock position: bottom-left, matching the pre-drag layout. */
+		function defaultPos() {
+			const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+			return { left: 16, top: Math.max(8, vh - 119) };
+		}
+
+		function loadPos() {
+			try {
+				if (typeof window !== "undefined") {
+					const raw = window.localStorage.getItem(POS_STORAGE_KEY);
+					if (raw) {
+						const p = JSON.parse(raw);
+						if (Number.isFinite(p.left) && Number.isFinite(p.top)) return { left: p.left, top: p.top };
+					}
+				}
+			} catch { /* private mode etc. */ }
+			return null;
+		}
+
+		function savePos(p) {
+			try {
+				if (typeof window !== "undefined") window.localStorage.setItem(POS_STORAGE_KEY, JSON.stringify(p));
+			} catch { /* ignore */ }
+		}
+
+		function clearPos() {
+			try {
+				if (typeof window !== "undefined") window.localStorage.removeItem(POS_STORAGE_KEY);
+			} catch { /* ignore */ }
+		}
+
+		/** Clamp a chip position inside the viewport (exported for tests). */
+		function clampPos(pos, width, height) {
+			const vw = (typeof window !== "undefined" && Number.isFinite(window.innerWidth)) ? window.innerWidth : 600;
+			const vh = (typeof window !== "undefined" && Number.isFinite(window.innerHeight)) ? window.innerHeight : 800;
+			return {
+				left: Math.min(Math.max(0, pos.left), Math.max(0, vw - width)),
+				top: Math.min(Math.max(0, pos.top), Math.max(0, vh - height)),
+			};
+		}
+
 		/**
 		 * The floating cost chip. `useProjection` is bound by the slot renderer
 		 * for the current session; `sessionId` comes from the inject factory.
@@ -90,6 +136,12 @@ window.__ModuleLoader__.load({
 			const [report, setReport] = react.useState(null);
 			const [error, setError] = react.useState(null);
 			const [refreshing, setRefreshing] = react.useState(false);
+			const [pos, setPos] = react.useState(() => loadPos() ?? defaultPos());
+			const [dragging, setDragging] = react.useState(false);
+			const chipRef = react.useRef(null);
+			const posRef = react.useRef(pos);
+			posRef.current = pos;
+			const dragRef = react.useRef(null);
 
 			const liveTotal = usage
 				? (usage.uncachedInputTokens ?? 0) + (usage.outputTokens ?? 0) + (usage.cacheReadTokens ?? 0) + (usage.cacheWriteTokens ?? 0)
@@ -120,6 +172,64 @@ window.__ModuleLoader__.load({
 				return () => clearInterval(timer);
 			}, [load]);
 
+			// Keep the chip inside the viewport when the window resizes.
+			react.useEffect(() => {
+				const onResize = () => {
+					const el = chipRef.current;
+					if (!el) return;
+					setPos((p) => clampPos(p, el.offsetWidth, el.offsetHeight));
+				};
+				if (typeof window !== "undefined") window.addEventListener("resize", onResize);
+				return () => {
+					if (typeof window !== "undefined") window.removeEventListener("resize", onResize);
+				};
+			}, []);
+
+			// ── drag handlers ───────────────────────────────────────────────────
+			const onPointerDown = (e) => {
+				if (e.button !== undefined && e.button !== 0) return;
+				if (e.target && typeof e.target.closest === "function" && e.target.closest("button")) return;
+				dragRef.current = {
+					startX: e.clientX,
+					startY: e.clientY,
+					startLeft: posRef.current.left,
+					startTop: posRef.current.top,
+					dragging: false,
+					pointerId: e.pointerId,
+				};
+				try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* ignore */ }
+			};
+			const onPointerMove = (e) => {
+				const d = dragRef.current;
+				if (!d || e.pointerId !== d.pointerId) return;
+				const dx = e.clientX - d.startX;
+				const dy = e.clientY - d.startY;
+				if (!d.dragging && Math.abs(dx) + Math.abs(dy) < DRAG_THRESHOLD) return;
+				if (!d.dragging) {
+					d.dragging = true;
+					setDragging(true);
+				}
+				const el = chipRef.current;
+				const w = el ? el.offsetWidth : 400;
+				const h = el ? el.offsetHeight : 60;
+				setPos(clampPos({ left: d.startLeft + dx, top: d.startTop + dy }, w, h));
+			};
+			const onPointerUp = (e) => {
+				const d = dragRef.current;
+				if (!d || e.pointerId !== d.pointerId) return;
+				dragRef.current = null;
+				setDragging(false);
+				try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+				if (d.dragging) savePos(posRef.current);
+			};
+			// Double-click anywhere on the chip (not the button) resets to the
+			// default bottom-left dock and forgets the saved position.
+			const onDoubleClick = (e) => {
+				if (e.target && typeof e.target.closest === "function" && e.target.closest("button")) return;
+				clearPos();
+				setPos(defaultPos());
+			};
+
 			const showTokens = report ? report.tokens.total : (liveTotal ?? 0);
 			const modelLine = report
 				? (report.provider ? report.provider + " · " : "") + (report.model ?? "?")
@@ -137,8 +247,13 @@ window.__ModuleLoader__.load({
 			// and keys inside props trigger a React warning — both caught by the
 			// SSR assertions).
 			const chip = react_jsx_runtime.jsx("div", {
-				style: chipStyle,
-				title,
+				ref: chipRef,
+				style: { ...chipStyle, left: pos.left, top: pos.top, cursor: dragging ? "grabbing" : "grab" },
+				title: title + "\ndrag to move · double-click to reset position",
+				onPointerDown,
+				onPointerMove,
+				onPointerUp,
+				onDoubleClick,
 				children: [
 					react_jsx_runtime.jsx("div", {
 						style: { fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" },
@@ -195,6 +310,7 @@ window.__ModuleLoader__.load({
 		exports.CostDock = CostDock;
 		exports.apply = apply;
 		exports.inject = inject;
+		exports.clampPos = clampPos;
 		return module.exports;
 	}
 });

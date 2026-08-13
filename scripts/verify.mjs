@@ -313,6 +313,14 @@ const mixedAgent = {
   check('CL6: SSR html contains loading state', html.includes('会话费用') && html.includes('加载中'), html)
   check('CL7: SSR html contains refresh button', html.includes('↻'), html)
   check('CL8: SSR html has fixed chip style', html.includes('position:fixed'), html)
+  check('CL9: SSR html has draggable chip (touch-action + grab cursor)', html.includes('touch-action:none') && html.includes('cursor:grab'), html)
+
+  // Drag position clamp: viewport is 600x800 in the SSR-less pure helper.
+  delete globalThis.window
+  const clamped = factoryExports.clampPos({ left: 9999, top: -50 }, 400, 60)
+  check('CL10: clampPos keeps chip inside viewport', clamped.left === 200 && clamped.top === 0, JSON.stringify(clamped))
+  const inside = factoryExports.clampPos({ left: 100, top: 100 }, 400, 60)
+  check('CL11: clampPos leaves interior positions untouched', inside.left === 100 && inside.top === 100, JSON.stringify(inside))
 }
 
 console.log(failures === 0 ? '\nALL CHECKS PASSED' : `\n${failures} CHECK(S) FAILED`)

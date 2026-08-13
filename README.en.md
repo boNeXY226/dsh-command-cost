@@ -47,6 +47,9 @@ deepseek-official · deepseek-v4-pro
 
 - **Refresh**: manual ↻ button + a 5-second auto-refresh + an immediate refetch
   whenever the `tokenUsage` projection changes.
+- **Draggable**: press and drag the chip anywhere (clamped to the viewport); the
+  position is remembered in the browser and survives refreshes; double-click the
+  chip to reset it to the bottom-left corner.
 - The chip renders through a React portal to `document.body` with theme-aware
   colors (`--dsw-alias-*` variables), so it follows dark/light switching.
 
