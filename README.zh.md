@@ -155,6 +155,13 @@ deepseek-official · deepseek-v4-pro   🟢 空闲时段   10,600,000 tok   ¥45
 `ctx.tokenMeter`、`ctx.get('sessionProjections')` 都由 Cordis 在加载时注入，
 因此它可以在只包含本包本身的 profile `node_modules` 中解析运行。
 
+## 隐私说明
+
+`/cost-panel/data` HTTP 路由会对任何被询问的 session id 应答。dsh 的 web
+服务器默认只绑定 `127.0.0.1`，因此该路由仅本机可达；若部署把绑定改为
+`0.0.0.0`，能访问该端口的任何人都能读取可猜测 session id 的 token/费用汇总。
+请勿把端口暴露给不可信网络。
+
 ## 开发验证
 
 `scripts/verify.mjs` 用真实的 cordis + loader + `dsh-commands` + React 18

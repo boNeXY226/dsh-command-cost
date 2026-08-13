@@ -19,9 +19,10 @@ const root = resolve(here, '..')
 /**
  * Locate the dsh installation's node_modules (cordis, loader, dsh-commands,
  * react, react-dom/server live there). Resolution order:
- *   1. $DSH_INSTALL — explicit override;
- *   2. `dsh` on PATH — <bin>/../../node_modules (the .bin shim's install root);
- *   3. the machine-specific npx-cache fallback this repo was developed on.
+ *   1. $DSH_INSTALL — explicit override (CI points it at the local install);
+ *   2. `dsh` on PATH — <bin>/../../node_modules (the .bin shim's install root).
+ * When neither works, print guidance: `npm install` in this repo provides a
+ * local installation at ./node_modules for DSH_INSTALL.
  */
 function resolveInstall() {
   if (process.env.DSH_INSTALL) return process.env.DSH_INSTALL
@@ -32,7 +33,10 @@ function resolveInstall() {
       if (existsSync(nm)) return nm
     }
   } catch { /* fall through */ }
-  return '/Users/bone/.npm/_npx/1e7f6d9597241db0/node_modules'
+  console.error('verify: cannot locate a dsh installation. Run `npm install` here, then either')
+  console.error('  DSH_INSTALL="$PWD/node_modules" npm run verify')
+  console.error('or put `dsh` on PATH.')
+  process.exit(2)
 }
 
 const INSTALL = resolveInstall()
@@ -103,7 +107,7 @@ const NORM = {
   check('fold: reported = true', folded.reported === true)
 }
 
-// ── temp profile dir that mirrors /Users/bone/.dsh/profiles/web ────────────
+// ── temp profile dir that mirrors a dsh profile layout ──────────────────────
 const temp = mkdtempSync(join(tmpdir(), 'dsh-cost-test-'))
 mkdirSync(join(temp, 'node_modules', 'dsh-command-cost'), { recursive: true })
 copyFileSync(join(root, 'index.js'), join(temp, 'node_modules', 'dsh-command-cost', 'index.js'))

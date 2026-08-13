@@ -167,6 +167,14 @@ load time, so it resolves even from a profile whose node_modules contains
 nothing but this package. The client bundle only uses the platform seeds
 (`react`, `react/jsx-runtime`, `react-dom`).
 
+## Privacy note
+
+The `/cost-panel/data` HTTP route answers for any session id it is asked
+about. The dsh web server binds `127.0.0.1` by default, so the route is only
+reachable from the same machine; if a deployment binds `0.0.0.0`, anyone who
+can reach the port can read token/cost aggregates for guessable session ids.
+Do not expose the port to an untrusted network.
+
 ## Development
 
 `scripts/verify.mjs` boots the real cordis + loader + `dsh-commands` + React 18
