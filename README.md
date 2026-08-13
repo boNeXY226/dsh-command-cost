@@ -1,17 +1,13 @@
 # dsh-command-cost
 
-A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (dsh) profile
-plugin: the `/cost` slash command plus a floating web UI cost chip showing the
-current session's **model, cumulative token usage, billing period (🔴 peak /
-🟢 off-peak) and estimated monetary cost** — with time-of-day pricing that
-switches over automatically on a configured effective date.
+[English](README.en.md)
 
-[中文文档](README.zh.md)
+dsh profile 插件：注册 `/cost` 斜杠命令，显示**当前会话的模型、累计 token 消耗、
+当前计费时段（🔴 高峰 / 🟢 空闲）与估算费用**。
 
-## Features
+## 行为
 
-Type `/cost` in any interactive surface that composes `@deepseek-ai/dsh-commands`
-(the shipped Web UI does):
+在 Web UI（或任何组合了 `@deepseek-ai/dsh-commands` 的交互界面）中输入 `/cost`，直接返回类似：
 
 ```
 Session token usage & estimated cost
@@ -25,7 +21,9 @@ Session token usage & estimated cost
 
   input (uncached)            6,000,000 tok
   cache read                  4,000,000 tok
-  ...
+  cache write                         0 tok
+  output                        600,000 tok
+  ------------------------------------------------
   total                      10,600,000 tok  ¥45.1500
 
   cost by tier:
@@ -34,77 +32,52 @@ Session token usage & estimated cost
     空闲价             7,300,000 tok  ¥18.1500
 ```
 
-On web profiles the package's `dsh.client` half also renders a **floating chip**
-at the bottom-left of the page:
+要点：
 
-```
-deepseek-official · deepseek-v4-pro
-🟢 空闲时段   34.5M tok   ¥2.5111   ↻
-```
+- **模型**：来自接收命令的 agent 的 `options.provider` / `options.model`。
+- **时段徽章**：🔴 高峰时段 / 🟢 空闲时段，按北京时间实时计算。
+- **分时计费**：会话日志的每个事件都带 Unix `time`，因此每笔用量按**它发生时刻**
+  的档位计费（原价 / 高峰价 / 空闲价），而不是全部按"现在"计价；跨档位的会话会分行展示。
+- **生效日期**：`peakEffectiveAt`（默认 `2026-08-17T00:00:00+08:00`）之前一律原价；
+  之后按发生时刻的高峰/空闲档计价。
+- 数据来源：优先直接折叠 `session.events`（与 `dsh-token-meter` 的 `tokenUsage`
+  投影完全相同的 `(turn, step)` 去重规则）；日志无用量时回退到投影快照（聚合值，按当前档位计价）。
+- 命令不接受参数；执行不进模型历史、不消耗 token。
+- `cache-write` 默认按该档位的 input 价格计费（DeepSeek 惯例），可在每行显式覆盖。
 
-<img src="docs/cost-chip.png" width="420" alt="Cost chip preview — the floating chip as rendered at the bottom-left of the conversation view">
+## 内置价目表（人民币 / 百万 tokens）
 
-
-- **Refresh**: manual ↻ button + a 5-second auto-refresh + an immediate refetch
-  whenever the `tokenUsage` projection changes.
-- The chip renders through a React portal to `document.body` with theme-aware
-  colors (`--dsw-alias-*` variables), so it follows dark/light switching.
-
-### How the numbers work
-
-- **Model** comes from the receiving agent's `options` (provider · model); the
-  HTTP route falls back to the session's folded `request/header` for persisted
-  sessions without a live agent.
-- **Period badge** is computed live in Beijing time (`Asia/Shanghai` by
-  default): 🔴 peak during `9:00–12:00` and `14:00–18:00`, 🟢 off-peak otherwise
-  (half-open ranges).
-- **Time-of-day billing**: every durable session event carries a Unix `time`,
-  so each usage sample is priced at the tier of the moment it happened —
-  original / peak / off-peak — instead of everything being priced at "now".
-  Sessions spanning tiers show a per-tier breakdown.
-- **Effective date**: before `peakEffectiveAt` (default
-  `2026-08-17T00:00:00+08:00`) everything bills at the original prices; on and
-  after it, requests bill at their own period's prices. Nothing to change when
-  the date arrives.
-- **Usage source**: a direct fold of `session.events` with the exact
-  `(turn, step)` sample-replacement rule of the dsh-token-meter `tokenUsage`
-  projection; falls back to the projection snapshot when the log has no usage.
-- **Cache write** bills at each tier's input price (DeepSeek convention), and
-  can be overridden per row.
-
-## Built-in price table (CNY per 1M tokens)
-
-| Model | Tier | Input (cache hit) | Input (cache miss) | Output |
+| 模型 | 档位 | 输入（缓存命中） | 输入（未命中） | 输出 |
 |---|---|---:|---:|---:|
-| deepseek-v4-flash | original | 0.02 | 1.00 | 2.00 |
-| deepseek-v4-flash | peak | 0.10 | 3.00 | 9.00 |
-| deepseek-v4-flash | off-peak | 0.05 | 1.50 | 4.50 |
-| deepseek-v4-pro | original | 0.025 | 3.00 | 6.00 |
-| deepseek-v4-pro | peak | 0.30 | 9.00 | 27.00 |
-| deepseek-v4-pro | off-peak | 0.15 | 4.50 | 13.50 |
-| deepseek-chat | original only | 0.5 | 2 | 3 |
-| deepseek-reasoner | original only | 1 | 4 | 16 |
+| deepseek-v4-flash | 原价 | 0.02 | 1.00 | 2.00 |
+| deepseek-v4-flash | 高峰价 | 0.10 | 3.00 | 9.00 |
+| deepseek-v4-flash | 空闲价 | 0.05 | 1.50 | 4.50 |
+| deepseek-v4-pro | 原价 | 0.025 | 3.00 | 6.00 |
+| deepseek-v4-pro | 高峰价 | 0.30 | 9.00 | 27.00 |
+| deepseek-v4-pro | 空闲价 | 0.15 | 4.50 | 13.50 |
+| deepseek-chat | 仅原价 | 0.5 | 2 | 3 |
+| deepseek-reasoner | 仅原价 | 1 | 4 | 16 |
 
-Peak hours: Beijing time 9:00–12:00 and 14:00–18:00 (half-open); everything
-else is off-peak. Cache-write price = input (cache-miss) price.
+高峰时段：北京时间 9:00–12:00、14:00–18:00（半开区间），其余为空闲。
+`cache-write` = 输入（未命中）价格。
 
-## Configuration (all optional)
+## 配置（全部可选）
 
-Override in the profile's `cordis.patch.yml`:
+在 profile 的 `cordis.patch.yml` 中按需覆盖：
 
 ```yaml
 - id: command-cost
   config:
-    currencySymbol: '¥'               # default ¥
-    exchangeRate: 0.14                # optional: also shows an ≈ USD line
-    timeZone: 'Asia/Shanghai'         # time zone the billing periods use
-    peakRanges: [[9, 12], [14, 18]]   # peak hours, half-open [start, end)
-    peakEffectiveAt: '2026-08-17T00:00:00+08:00'   # time-of-day prices take effect (ISO 8601)
-    perMTok:                          # override the fallback row
+    currencySymbol: '¥'               # 默认 ¥
+    exchangeRate: 0.14                # 可选，填了额外显示 ≈ USD 行
+    timeZone: 'Asia/Shanghai'         # 计费时段所用时区（北京时间）
+    peakRanges: [[9, 12], [14, 18]]   # 高峰时段（小时，半开区间 [start, end)）
+    peakEffectiveAt: '2026-08-17T00:00:00+08:00'   # 分时价生效时刻（ISO 8601）
+    perMTok:                          # 覆盖 fallback 行（原价档）
       input: 2
       cacheRead: 0.5
       output: 3
-    models:                           # exact match by model id or provider name
+    models:                           # 按 model id 或 provider 名精确匹配
       deepseek-v4-pro:
         input: 3
         cacheRead: 0.025
@@ -113,42 +86,61 @@ Override in the profile's `cordis.patch.yml`:
         offPeak: { input: 4.5, cacheRead: 0.15, output: 13.5 }
 ```
 
-Row resolution: `models[model]` → `models[provider]` → `perMTok` (fallback).
-Rows without `peak`/`offPeak` always bill at original prices.
+价格行解析顺序：`models[model]` → `models[provider]` → `perMTok`（fallback）。
+某行缺 `peak`/`offPeak` 时该模型永远按原价计（如 deepseek-chat / reasoner）。
 
-## Repository layout
+## Web UI 面板（输入框上方的费用条）
+
+本包同时是一个 `dsh.client` 双面插件：host 启动时会扫描启用的插件行，把
+`exports["./client"]` 指向的 `client.js`（手写 bundle，无需构建工具链）写入
+客户端启动图，浏览器加载后在 **输入框上方**（`conversation.input.dock`，
+GoalBar 同款位置）渲染一条费用条：
+
+```
+deepseek-official · deepseek-v4-pro   🟢 空闲时段   10,600,000 tok   ¥45.1500   ↻
+```
+
+<img src="docs/cost-chip.png" width="420" alt="费用胶囊预览 — 悬浮在会话左下角的费用胶囊">
+
+
+- **↻ 刷新按钮** + 每 5 秒自动刷新 + `tokenUsage` 投影一变化立即刷新；
+- 数据来自 host 的 `/cost-panel/data?session=<id>` JSON 路由（价格与配置只在
+  host，单一数据源），悬停面板可看完整价目表；
+- 首次启用需重启 `dsh web`（客户端启动图在 host 启动时写入）；之后
+  **改 `client.js` 只需刷新浏览器页面**（`/plugins` 路由实时读盘、no-cache），
+  改 `index.js`（价格、逻辑、路由）才需要重启。
+
+## 仓库结构
 
 ```
 .
-├── index.js              # host plugin: /cost command + /cost-panel/data route + pricing fold
-├── client.js             # client bundle (dsh.client, hand-written, no build step)
-├── cordis.patch.yml      # mount-row example (copy into a profile patch or reference via --patch)
-├── scripts/verify.mjs    # offline verification (real cordis/loader/commands + React SSR assertions)
-├── package.json          # repo root IS the package: dsh.client, exports, files, scripts
-├── README.md / README.zh.md
+├── index.js              # host 插件：/cost 命令 + /cost-panel/data 路由 + 分时计费
+├── client.js             # 客户端 bundle（dsh.client，手写无构建）：悬浮费用胶囊
+├── cordis.patch.yml      # 挂载行示例（复制到 profile 的 patch 或 --patch 引用）
+├── scripts/verify.mjs    # 离线验证（真实 cordis/loader/commands + 真实 React SSR）
+├── package.json          # 根即包：dsh.client 声明、exports、files、scripts
+├── README.md（中文主文档）/ README.en.md（英文版）
 └── LICENSE
 ```
 
-## Installation
+## 安装
 
-1. Install this repo as a profile dependency (either way):
+1. 把本仓库安装为 profile 依赖（两种方式任选）：
 
    ```sh
-   # A: official path (pnpm forwarder; keeps package.json/lockfile consistent)
+   # 方式 A：官方路径（pnpm 转发，保持 package.json/lockfile 一致）
    dsh plugin --profile web add "file:/absolute/path/to/ds-plugins"
-   #    (or `add dsh-command-cost` once published to npm)
 
-   # B: manual copy
+   # 方式 B：手动复制（不改 package.json；再次运行 dsh plugin add 其他包时可能被 pnpm 清理，需重拷）
    mkdir -p "$DSH_HOME/profiles/web/node_modules"
    cp index.js client.js package.json "$DSH_HOME/profiles/web/node_modules/dsh-command-cost/"
    ```
 
-   ⚠️ Option A installs a copy of the files at that moment; after editing the
-   source, re-sync (`dsh plugin --profile web install` or copy the files again).
+   ⚠️ 方式 A 安装的是当时文件的副本；之后改动源码需重新同步
+   （重跑 `dsh plugin --profile web install` 或直接 `cp index.js client.js` 到
+   `$DSH_HOME/profiles/web/node_modules/dsh-command-cost/`）。
 
-2. Add the row to the profile's patch file
-   (`$DSH_HOME/profiles/web/cordis.patch.yml`) — the repo's `cordis.patch.yml`
-   is exactly this example with every config key commented:
+2. 在 profile 的 `cordis.patch.yml`（`$DSH_HOME/profiles/web/cordis.patch.yml`）中加入：
 
    ```yaml
    - insert:
@@ -156,45 +148,36 @@ Rows without `peak`/`offPeak` always bill at original prices.
          name: dsh-command-cost
    ```
 
-3. Restart the profile (`dsh web` restart required — plugin rows are read at
-   boot; the web profile has plugin HMR disabled).
+   （本仓库的 `cordis.patch.yml` 就是这份示例，含全部可配置项的注释。）
 
-4. Verify: `dsh --profile web --dump-config` shows the `command-cost` row; the
-   chip appears bottom-left and `/cost` works in the session.
+3. 重启该 profile（`dsh web` 重启后生效；插件行在启动时读入，web profile 未启用插件 HMR）。
 
-## Zero-dependency note
+4. 验证：`dsh --profile web --dump-config` 应能看到 `command-cost` 行；
+   进入会话后输入 `/cost`。
 
-The host plugin imports no third-party modules: `ctx.commands`,
-`ctx.tokenMeter`, and `ctx.get('sessionProjections')` are injected by Cordis at
-load time, so it resolves even from a profile whose node_modules contains
-nothing but this package. The client bundle only uses the platform seeds
-(`react`, `react/jsx-runtime`, `react-dom`).
+## 零依赖说明
 
-## Privacy note
+本插件不 import 任何第三方模块：`apply(ctx, config)` 使用的 `ctx.commands`、
+`ctx.tokenMeter`、`ctx.get('sessionProjections')` 都由 Cordis 在加载时注入，
+因此它可以在只包含本包本身的 profile `node_modules` 中解析运行。
 
-The `/cost-panel/data` HTTP route answers for any session id it is asked
-about. The dsh web server binds `127.0.0.1` by default, so the route is only
-reachable from the same machine; if a deployment binds `0.0.0.0`, anyone who
-can reach the port can read token/cost aggregates for guessable session ids.
-Do not expose the port to an untrusted network.
+## 隐私说明
 
-## Development
+`/cost-panel/data` HTTP 路由会对任何被询问的 session id 应答。dsh 的 web
+服务器默认只绑定 `127.0.0.1`，因此该路由仅本机可达；若部署把绑定改为
+`0.0.0.0`，能访问该端口的任何人都能读取可猜测 session id 的 token/费用汇总。
+请勿把端口暴露给不可信网络。
 
-`scripts/verify.mjs` boots the real cordis + loader + `dsh-commands` + React 18
-(including `react-dom/server` SSR assertions) from a dsh installation, resolves
-the plugin the way a profile does, and covers: period/tier pure functions
-(11:59/12:00 boundaries, time zones), the three-tier time-of-day fold, sample
-dedup, projection fallback, argument rejection, config hot update, the data
-route JSON, and client-bundle loading/rendering. The dsh installation is
-located via `$DSH_INSTALL`, then `dsh` on PATH, then a machine-specific
-fallback.
+## 开发验证
+
+`scripts/verify.mjs` 用真实的 cordis + loader + `dsh-commands` + React 18
+（含 react-dom/server 的 SSR 断言）从 dsh 安装目录启动，模拟 profile 目录布局
+解析本插件，覆盖：时段判定纯函数（边界 11:59/12:00、时区换算）、三档分时折叠、
+去重、投影回退、参数拒绝、配置热更新、数据路由 JSON、客户端 bundle 加载与渲染等
+场景。dsh 安装目录解析顺序：`$DSH_INSTALL` 环境变量 → PATH 上的 `dsh` →
+本机 npx 缓存兜底。
 
 ```sh
-npm install          # installs @deepseek-ai/dsh as a devDependency (for verification)
-npm run check        # syntax check
-npm run verify       # full offline verification (also runs in CI)
+npm run check    # 语法检查
+npm run verify   # 全量离线验证
 ```
-
-## License
-
-MIT

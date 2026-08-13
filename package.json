@@ -15,9 +15,9 @@
     "client.js",
     "cordis.patch.yml",
     "README.md",
-    "README.zh.md",
     "LICENSE",
-    "docs/cost-chip.png"
+    "docs/cost-chip.png",
+    "README.en.md"
   ],
   "keywords": [
     "dsh",
